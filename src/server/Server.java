@@ -82,7 +82,7 @@ public class Server {
 
     public static void broadCast(String msg) throws IOException {
         for (User user : users) {
-            user.getOut().writeUTF(user.getName() + " -> " + msg);
+            user.getOut().writeUTF( msg);
         }
     }
     public static void sendOnlineUsers() throws IOException {
