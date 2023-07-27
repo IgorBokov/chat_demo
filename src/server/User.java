@@ -1,5 +1,8 @@
 package server;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -14,6 +17,9 @@ public class User {
     private DataOutputStream out;
     private DataInputStream in;
     private String name;
+    private int id;
+    private JSONParser jsonParser = new JSONParser();
+    private JSONObject jsonObject;
 
     public User(Socket socket) throws IOException {
         this.socket = socket;
@@ -31,6 +37,10 @@ public class User {
 
     public String getName() {
         return name;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public void setName(String name) {
@@ -59,15 +69,17 @@ public class User {
         }
         return true;
     }
-    public boolean login(){
-        try {
-        this.getOut().writeUTF(" Введите login : ");
-        String login = this.getIn().readUTF();
-        this.getOut().writeUTF(" Введите pass : ");
-        String pass = this.getIn().readUTF();
-        Connection connection = null;
 
-            connection = DriverManager.getConnection(
+    public boolean login() {
+        try {
+            this.getOut().writeUTF(" Введите login : ");
+            String login = this.getIn().readUTF();
+            jsonObject = (JSONObject) jsonParser.parse(login);
+            login = (String) jsonObject.get("msg");
+            this.getOut().writeUTF(" Введите pass : ");
+            String pass = this.getIn().readUTF();
+            pass = (String) jsonObject.get("msg");
+            Connection connection = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/chat39",
                     "root",
                     "");
@@ -76,11 +88,12 @@ public class User {
                     "SELECT * FROM users WHERE login='" + login + "' AND pass='" + pass + "';");
             if (resultSet.next()) {
                 String name = resultSet.getString("name");
+                this.id = resultSet.getInt("id");
                 this.setName(name);
                 return true;
             } else {
                 this.getOut().writeUTF("Неверный логин или пароль");
-                return  false;
+                return false;
             }
         } catch (Exception e) {
             e.printStackTrace();
